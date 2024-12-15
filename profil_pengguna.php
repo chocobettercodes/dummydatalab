@@ -1,4 +1,5 @@
 <?php
+require 'connection.php';
 
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'fetch_data'){
 
@@ -13,8 +14,44 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
     // kembalikan response JSON
     header('Content-Type: application/json');
     // var_dump($response);
-    echo $response;
-    exit;
+    $arr_decode = json_decode($response, true);
+    // var_dump($arr_decode);
+
+    // cek isi json 
+    if($arr_decode['status'] === 'OK'){
+        $insert_results = [];
+        
+
+        //melakukan perulangan data json 
+        foreach($arr_decode['data'] as $person){
+            $first_name = $person['firstname'];
+            $last_name = $person['lastname'];
+            $email = $person['email'];
+            $phone = $person['phone'];
+            $birthday = $person['birthday'];
+            $gender = $person['gender'];
+            $street = $person['address']['street'];
+            $streetname= $person['address']['streetName'];
+            $city = $person['address']['city'];
+            $image = $person['image'];
+
+            // insert data ke tabel persons
+            $query = "INSERT INTO persons (first_name, last_name, email, phone, birthday, gender, street, streetname, city, image) 
+                      VALUES ('$first_name', '$last_name', '$email', '$phone', '$birthday', '$gender', '$street', '$streetname', '$city', '$image')";
+
+            // cek kondisi berhasil tidaknya saat input ke db
+            if(mysqli_query($conn, $query)){
+                // echo 'data berhasil ditambahkan';
+                $insert_results[] = "Data {$first_name} {$last_name} berhasil ditambahkan";
+            }else{
+                // echo "Error : ". mysqli_error($conn)."\n";
+                $insert_results[] = "Error menambahkan {$first_name} {$last_name}: " . mysqli_error($conn);
+            }
+        }
+        echo json_encode(['status' => 'OK', 'message' => 'Data berhasil ditambahkan']);
+    }else{
+        echo json_encode(['status' => 'Error', 'message' => 'Gagal mengambil data dari API']);
+    }
 }
 ?>
 
@@ -102,6 +139,29 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                                 </thead>
                                 <tbody id="hasil">
 
+                                    <?php
+                                        // mengambil data dari database
+                                        $data_persons = "SELECT * FROM persons";
+                                        $hasil = mysqli_query($conn, $data_persons);
+                                        $data = mysqli_fetch_all($hasil, MYSQLI_ASSOC);
+                                        if(!empty($data)){
+                                            $no = 1;
+                                            foreach($data as $dummy){
+                                                ?>
+                                    <tr>
+                                        <td scope="row"><?= $no;?></td>
+                                        <td><?= $dummy['first_name'];?></td>
+                                        <td><?= $dummy['last_name'];?></td>
+                                        <td><?= $dummy['email'];?></td>
+                                        <td><?= $dummy['phone'];?></td>
+                                        <td><?= $dummy['birthday'];?></td>
+                                    </tr>
+                                    <?php
+                                            $no++;
+                                            }
+                                        }
+                                    ?>
+
                                 </tbody>
                             </table>
                         </div>
@@ -145,49 +205,16 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
             type: 'GET',
             data: data,
             success: function(response) {
-                // console.log(response);
-                var hasil = '';
-                let no = 1;
-                // jika response ada datanya
-                if (response.status === 'OK' && response.data) {
-                    // tampilkan datanya 
-                    response.data.forEach(function(person) {
-                        hasil += `
-                        <tr>
-                            <th scope="row">${no}</th>
-                            <td>${person.firstname}</td>
-                            <td>${person.lastname}</td>
-                            <td>${person.email}</td>
-                            <td>${person.phone}</td>
-                            <td>${person.birthday}</td>
-                        </tr>
-                        `;
-                        no++;
-                    });
-                    // Menambahkan data ke dalam tabel
-                    $('#myTable tbody').html(hasil);
-
-                    // Menghitung ulang DataTable agar paging berfungsi
-                    var table = $('#myTable').DataTable();
-                    table.clear(); // Clear previous table data
-                    table.rows.add($('#myTable tbody tr')); // Add new rows
-                    table.draw(); // Redraw the table with new data
+                if (response.status === 'OK') {
+                    alert(response.message);
+                    // load_data();
                 } else {
-                    // Jika tidak ada data, tampilkan pesan
-                    $('#myTable tbody').html(`
-                    <tr>
-                        <td colspan="6" class="text-center">Tidak ada data</td>
-                    </tr>
-                `);
+                    alert('Gagal menambahkan data!');
                 }
-
-                // Re-inisialisasi DataTable setelah update
-                $('#myTable').DataTable();
             },
             error: function(xhr, status, error) {
                 console.error('Error:', error);
-                $('#result').html('<p>Failed to fetch data.</p>');
-            },
+            }
         })
     }
     </script>
