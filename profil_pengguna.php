@@ -1,6 +1,7 @@
 <?php
 require 'connection.php';
 
+// ambil data dari api
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'fetch_data'){
 
     // get data yang diinput 
@@ -48,10 +49,39 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                 $insert_results[] = "Error menambahkan {$first_name} {$last_name}: " . mysqli_error($conn);
             }
         }
-        echo json_encode(['status' => 'OK', 'message' => 'Data berhasil ditambahkan']);
+        echo json_encode([
+            'status' => 'OK', 
+            'message' => 'Data berhasil ditambahkan']);
     }else{
         echo json_encode(['status' => 'Error', 'message' => 'Gagal mengambil data dari API']);
     }
+}
+
+// ambil data untuk detail
+// header('Content-Type: application/json');
+if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_detail'){
+    header('Content-Type: application/json');
+    $id_profil = $_GET['id'] ?? '';
+
+    $sql = "SELECT * FROM persons WHERE id_persons = '$id_profil'";
+    $hasil = mysqli_query($conn, $sql);
+
+    ob_clean();
+    // mengecek data 
+    if(mysqli_num_rows($hasil)  > 0){
+        $dt = mysqli_fetch_assoc($hasil);
+
+        echo json_encode([
+            'status' => 'OK', 
+            'data' => $dt
+        ], JSON_UNESCAPED_SLASHES);
+    }else{
+        echo json_encode([
+            'status' => 'Error',
+            'message' => 'Data tidak ditemukan'
+        ]);
+    }
+    exit;
 }
 ?>
 
@@ -66,6 +96,9 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
     <!-- Link CSS untuk Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
     <!-- Link CSS untuk DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
     </script>
@@ -135,6 +168,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                                         <th>Email</th>
                                         <th>Telepon</th>
                                         <th>Tanggal Lahir</th>
+                                        <th width="auto">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="hasil">
@@ -155,6 +189,18 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                                         <td><?= $dummy['email'];?></td>
                                         <td><?= $dummy['phone'];?></td>
                                         <td><?= $dummy['birthday'];?></td>
+                                        <td width="auto">
+                                            <a href="#" class="btn btn-outline-primary btn-sm" title="Edit">
+                                                <i class="fa-regular fa-pen-to-square"></i>
+                                            </a>
+                                            <a href="#" onclick="get_detail(<?= $dummy['id_persons'];?>)"
+                                                class="btn btn-outline-info btn-sm" title="Detail">
+                                                <i class="fa-solid fa-circle-info"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-outline-danger btn-sm" title="Delete">
+                                                <i class="fa-regular fa-trash-can"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                     <?php
                                             $no++;
@@ -166,6 +212,95 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modaldetail" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Detail Profil Pengguna</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <img src="img/profile.jpg" alt="Contoh Gambar" width="100%">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        Nama Lengkap
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-7" id="nama_lengkap">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        Email
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-7" id="email"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        Telepon
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-7" id="telepon">
+
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        Tanggal Lahir
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-7" id="tanggal_lahir">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        Jenis Kelamin
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-7" id="jenis_kelamin">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        Alamat
+                                    </div>
+                                    <div class="col-md-1">
+                                        :
+                                    </div>
+                                    <div class="col-md-7" id="alamat">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
                 </div>
             </div>
         </div>
@@ -210,6 +345,42 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                     // load_data();
                 } else {
                     alert('Gagal menambahkan data!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        })
+    }
+
+    function get_detail(id) {
+
+        var data = {
+            id: id,
+            action: 'get_detail'
+        }
+        $.ajax({
+            url: 'profil_pengguna.php',
+            type: 'GET',
+            data: data,
+            success: function(response) {
+
+                console.log(response.data.email);
+                console.log(response); // Debug respons mentah dari server
+
+                if (response.status === 'OK') {
+                    // alert('Status OK');
+                    $('#nama_lengkap').text(response.data.first_name + ' ' + response.data.last_name);
+                    $('#email').text(response.data.email);
+                    $('#email').text(response.data.email);
+                    $('#telepon').text(response.data.phone);
+                    $('#tanggal_lahir').text(response.data.birthday);
+                    $('#jenis_kelamin').text(response.data.gender === 'male' ? 'Laki-laki' : 'Perempuan');
+                    $('#alamat').text(response.data.street + ', ' + response.data.streetname + ', ' +
+                        response.data.city);
+                    $('#modaldetail').modal('show');
+                } else {
+                    alert('Gagal menampilkan data!');
                 }
             },
             error: function(xhr, status, error) {
