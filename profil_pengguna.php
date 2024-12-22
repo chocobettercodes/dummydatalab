@@ -83,6 +83,25 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
     }
     exit;
 }
+
+// hapus data 
+if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'delete'){
+    $id_profil = $_GET['id'] ?? '';
+
+    if(!empty($id_profil)){
+        $query = "DELETE FROM persons WHERE id_persons = '$id_profil'";
+        $hasil = mysqli_query( $conn , $query);
+        if ($hasil) {
+            echo 'BERHASIL';
+            exit();
+        } else {
+            echo 'Gagal menghapus data';
+            exit();
+        }
+    }else{
+        echo 'Id tidak sesuai';
+    }
+}
 ?>
 
 
@@ -197,7 +216,8 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                                                 class="btn btn-outline-info btn-sm" title="Detail">
                                                 <i class="fa-solid fa-circle-info"></i>
                                             </a>
-                                            <a href="#" class="btn btn-outline-danger btn-sm" title="Delete">
+                                            <a href="#" onclick="delete_data(<?= $dummy['id_persons'];?>)"
+                                                class="btn btn-outline-danger btn-sm" title="Delete">
                                                 <i class="fa-regular fa-trash-can"></i>
                                             </a>
                                         </td>
@@ -379,6 +399,32 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                     $('#alamat').text(response.data.street + ', ' + response.data.streetname + ', ' +
                         response.data.city);
                     $('#modaldetail').modal('show');
+                } else {
+                    alert('Gagal menampilkan data!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        })
+    }
+
+    function delete_data(id) {
+        // console.log('id data adalah ', id);
+        var data = {
+            id: id,
+            action: 'delete'
+        }
+        $.ajax({
+            url: 'profil_pengguna.php',
+            type: 'GET',
+            data: data,
+            success: function(response) {
+                console.log(response); // Debug respons mentah dari server
+
+                if (response.trim() === 'BERHASIL') {
+                    alert("Data berhasil dihapus");
+                    location.reload();
                 } else {
                     alert('Gagal menampilkan data!');
                 }
