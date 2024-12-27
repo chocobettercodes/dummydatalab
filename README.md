@@ -18,3 +18,21 @@ Fitur ini memungkinkan untuk bisa kita mengubah, menghapus, menambahkan data mau
 ## TAMPILAN PROFIL PENGGUNA
 
 ![GAMBAR PROFIL PENGGUNA](image/user.png) <!-- Ganti dengan path ke gambar kalkulator umur Anda -->
+
+## TEKNOLOGI YANG DIGUNAKAN
+
+- PHP Native
+- Mysql
+- Ajax / Jquery
+- XAMPP
+- Bootstrap
+
+## TEKNOLOGI YANG DIGUNAKAN
+
+Cara menggunakannya adalah :
+
+1. buatkan database dengan nama "dummydatalab"
+2. import databasenya ke dalam database yang sudah dibuat sebelumnya
+3. download dan extract project dummydatalab ke dalam folder htdoc
+4. running xampp dan jalankan project dummydatalab
+5. program siap digunakan
