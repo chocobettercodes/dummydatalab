@@ -51,9 +51,12 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
         }
         echo json_encode([
             'status' => 'OK', 
-            'message' => 'Data berhasil ditambahkan']);
+            'message' => 'Data berhasil ditambahkan',
+            'details' => $insert_results]);
+        exit();
     }else{
         echo json_encode(['status' => 'Error', 'message' => 'Gagal mengambil data dari API']);
+        exit();
     }
 }
 
@@ -102,6 +105,122 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
         echo 'Id tidak sesuai';
     }
 }
+
+// get untuk edit data 
+if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'edit'){
+    header('Content-Type: application/json');
+    $id_profil = $_GET['id'] ?? '';
+
+    $sql = "SELECT * FROM persons WHERE id_persons = '$id_profil'";
+    $hasil = mysqli_query($conn, $sql);
+
+    ob_clean();
+    // mengecek data 
+    if(mysqli_num_rows($hasil)  > 0){
+        $dt = mysqli_fetch_assoc($hasil);
+
+        echo json_encode([
+            'status' => 'OK', 
+            'data' => $dt
+        ], JSON_UNESCAPED_SLASHES);
+    }else{
+        echo json_encode([
+            'status' => 'Error',
+            'message' => 'Data tidak ditemukan'
+        ]);
+    }
+    exit;
+}
+
+// Simpan hasil edit
+if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save'){
+    // ob_start(); 
+    header('Content-Type: application/json');
+
+    $id_user = $_POST['id'];
+    $nama_depan = $_POST['nama_depan'];
+    $nama_belakang = $_POST['nama_belakang'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'];
+    $jk = $_POST['jk'];
+    $ttl = $_POST['ttl'];
+    $street = $_POST['street'];
+    $street_name = $_POST['street_name'];
+    $city = $_POST['city'];
+
+    // var_dump($id_user, $nama_depan, $nama_belakang, $city);
+    
+    if(!empty($id_user) && !empty($nama_depan) && !empty($nama_belakang)){
+
+        $query = "UPDATE persons SET first_name = '$nama_depan', last_name = '$nama_belakang', email = '$email', phone ='$phone', birthday = '$ttl', gender = '$jk', street = '$street', streetname = '$street_name', city = '$city' WHERE id_persons = '$id_user'";
+        // $query = "INSERT INTO persons (first_name, last_name, email, phone, birthday, gender, street, streetname, city) 
+        //               VALUES ('$nama_depan', '$nama_belakang', '$email', '$phone', '$ttl', '$jk', '$street', '$street_name', '$city')";
+
+        // cek kondisi berhasil tidaknya saat input ke db
+        if(mysqli_query($conn, $query)){
+            // echo 'data berhasil ditambahkan';
+            echo json_encode([
+                'status' => 'OK', 
+                'message' => 'Data berhasil diubah']);
+            exit;
+            // echo "Data berhasil diubah";
+        }else{
+            // echo "Error : ". mysqli_error($conn)."\n";
+            echo json_encode([
+                'status' => 'OK', 
+                'message' => 'Data gagal diubah'.mysqli_error($conn)]);
+            exit;
+        }
+    }else{
+        // echo 'Data tidak valid';
+        echo json_encode(['status' => 'Error', 'message' => 'Data gagal disimpan']);
+        exit;
+    }
+}
+
+// tambah data baru
+if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create'){
+    // ob_start(); 
+    header('Content-Type: application/json');
+
+    $nama_depan = $_POST['nama_depan'];
+    $nama_belakang = $_POST['nama_belakang'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'];
+    $jk = $_POST['jk'];
+    $ttl = $_POST['ttl'];
+    $street = $_POST['street'];
+    $street_name = $_POST['street_name'];
+    $city = $_POST['city'];
+    
+    if(!empty($nama_depan) && !empty($nama_belakang)){
+
+        // $query = "UPDATE persons SET first_name = '$nama_depan', last_name = '$nama_belakang', email = '$email', phone ='$phone', birthday = '$ttl', gender = '$jk', street = '$street', streetname = '$street_name', city = '$city' WHERE id_persons = '$id_user'";
+        $query = "INSERT INTO persons (first_name, last_name, email, phone, birthday, gender, street, streetname, city)
+        VALUES ('$nama_depan','$nama_belakang', '$email', '$phone', '$ttl', '$jk', '$street', '$street_name', '$city')";
+
+        
+        // cek kondisi berhasil tidaknya saat input ke db
+        if(mysqli_query($conn, $query)){
+            // echo 'data berhasil ditambahkan';
+            echo json_encode([
+                'status' => 'OK', 
+                'message' => 'Data berhasil disimpan']);
+            exit;
+            // echo "Data berhasil diubah";
+        }else{
+            // echo "Error : ". mysqli_error($conn)."\n";
+            echo json_encode([
+                'status' => 'OK', 
+                'message' => 'Data gagal disimpan'.mysqli_error($conn)]);
+            exit;
+        }
+    }else{
+        // echo 'Data tidak valid';
+        echo json_encode(['status' => 'Error', 'message' => 'Data tidak valid']);
+        exit;
+    }
+}
 ?>
 
 
@@ -139,8 +258,6 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                 <a class="nav-link" href="dashboard.php">Home</a>
                 <a class="nav-link active" href="profil_pengguna.php">Data Profil Pengguna<span
                         class="sr-only">(current)</span></a>
-                <a class="nav-link" href="health.php">Data Alamat</a>
-                <a class="nav-link" href="health.php">Data Buku</a>
             </div>
         </div>
     </nav>
@@ -172,6 +289,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                         </div>
                         <div style="margin-left: 1rem;">
                             <button type="button" class="btn btn-dark" onclick="get_data()">GET DATA</button>
+                            <button type="button" class="btn btn-warning" onclick="tambah_data()"> TAMBAH DATA</button>
                         </div>
                     </div>
                 </div>
@@ -209,7 +327,8 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                                         <td><?= $dummy['phone'];?></td>
                                         <td><?= $dummy['birthday'];?></td>
                                         <td width="auto">
-                                            <a href="#" class="btn btn-outline-primary btn-sm" title="Edit">
+                                            <a href="#" onclick="edit_data(<?= $dummy['id_persons'];?>)"
+                                                class="btn btn-outline-primary btn-sm" title="Edit">
                                                 <i class="fa-regular fa-pen-to-square"></i>
                                             </a>
                                             <a href="#" onclick="get_detail(<?= $dummy['id_persons'];?>)"
@@ -250,7 +369,8 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                     <div class="container">
                         <div class="row">
                             <div class="col-md-4">
-                                <img src="img/profile.jpg" alt="Contoh Gambar" width="100%">
+                                <!-- <img src="img/profile.jpg" alt="Contoh Gambar" width="100%"> -->
+                                <img id="profile_pic" src="img/profile.jpg" alt="Foto Profil" width="100%">
                             </div>
                             <div class="col-md-8">
                                 <div class="row">
@@ -320,7 +440,143 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modaledit" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Edit Pengguna</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <form>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Nama Depan</label>
+                                <input type="text" class="form-control" id="edit_namadepan">
+                                <input type="hidden" class="form-control" id="id_user">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Nama Belakang</label>
+                                <input type="text" class="form-control" id="edit_namabelakang">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Email</label>
+                                <input type="email" class="form-control" id="edit_email">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Telepon</label>
+                                <input type="text" class="form-control" id="edit_phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleFormControlSelect1">Jenis Kelamin</label>
+                                <select class="form-control" id="edit_jk">
+                                    <option value="male">Laki-laki</option>
+                                    <option value="female">Perempuan</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Tanggal Lahir</label>
+                                <input type="date" class="form-control" id="edit_ttl">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Nama Jalan</label>
+                                <input type="text" class="form-control" id="edit_jalan">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Alamat</label>
+                                <input type="text" class="form-control" id="edit_alamat">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Kota</label>
+                                <input type="text" class="form-control" id="edit_kota">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="simpan_edit()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modaltambah" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Tambah Pengguna</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <form>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Nama Depan</label>
+                                <input type="text" class="form-control" id="namadepan">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Nama Belakang</label>
+                                <input type="text" class="form-control" id="namabelakang">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Email</label>
+                                <input type="email" class="form-control" id="email_x">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Telepon</label>
+                                <input type="text" class="form-control" id="phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleFormControlSelect1">Jenis Kelamin</label>
+                                <select class="form-control" id="jk">
+                                    <option value="male">Laki-laki</option>
+                                    <option value="female">Perempuan</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Tanggal Lahir</label>
+                                <input type="date" class="form-control" id="ttl">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Nama Jalan</label>
+                                <input type="text" class="form-control" id="jalan">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Alamat</label>
+                                <input type="text" class="form-control" id="alamat_x">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Kota</label>
+                                <input type="text" class="form-control" id="kota">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="simpan_data()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal loading -->
+    <div class="modal fade" id="modalLoading" tabindex="-1" aria-labelledby="modalLoadingLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-3">Harap tunggu, sedang memproses...</p>
                 </div>
             </div>
         </div>
@@ -347,6 +603,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
     });
 
     function get_data() {
+
         var negara = $('#negara').val();
         var jumlah = $('#jumlah').val();
         var data = {
@@ -355,22 +612,31 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
             jumlah: jumlah
         }
         // console.log(data);
+
+        $('#modalLoading').modal({
+            backdrop: 'static', // Mencegah modal ditutup dengan klik di luar
+            keyboard: false // Mencegah modal ditutup dengan tombol keyboard
+        });
         $.ajax({
             url: 'profil_pengguna.php',
             type: 'GET',
             data: data,
+            dataType: 'json',
             success: function(response) {
+                console.log(response);
+                $('#modalLoading').modal('hide');
                 if (response.status === 'OK') {
-                    alert(response.message);
-                    // load_data();
+                    // alert(response.message);
+                    location.reload();
                 } else {
                     alert('Gagal menambahkan data!');
                 }
             },
             error: function(xhr, status, error) {
+                $('#modalLoading').modal('hide');
                 console.error('Error:', error);
             }
-        })
+        });
     }
 
     function get_detail(id) {
@@ -385,19 +651,31 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
             data: data,
             success: function(response) {
 
-                console.log(response.data.email);
-                console.log(response); // Debug respons mentah dari server
+                // console.log(response.data.email);
+                // console.log(response); // Debug respons mentah dari server
 
                 if (response.status === 'OK') {
-                    // alert('Status OK');
+
+                    // gambar user 
+                    // var genderImage = response.data.gender === 'male' ? 'img/male.jpg' : 'img/female.jpg';
+                    var genderImage = response.data.gender === 'male' ?
+                        'img/male.jpg' // Gambar untuk laki-laki
+                        :
+                        'img/female.jpg'; // Gambar untuk perempuan
+                    // $('img[src="img/profile.jpg"]').attr('src', genderImage);
+
+                    // Mengupdate gambar profil
+                    $('#profile_pic').attr('src', genderImage);
+
                     $('#nama_lengkap').text(response.data.first_name + ' ' + response.data.last_name);
                     $('#email').text(response.data.email);
-                    $('#email').text(response.data.email);
+                    // $('#email').text(response.data.email);
                     $('#telepon').text(response.data.phone);
                     $('#tanggal_lahir').text(response.data.birthday);
                     $('#jenis_kelamin').text(response.data.gender === 'male' ? 'Laki-laki' : 'Perempuan');
                     $('#alamat').text(response.data.street + ', ' + response.data.streetname + ', ' +
                         response.data.city);
+
                     $('#modaldetail').modal('show');
                 } else {
                     alert('Gagal menampilkan data!');
@@ -420,8 +698,6 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
             type: 'GET',
             data: data,
             success: function(response) {
-                console.log(response); // Debug respons mentah dari server
-
                 if (response.trim() === 'BERHASIL') {
                     alert("Data berhasil dihapus");
                     location.reload();
@@ -433,6 +709,118 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['acti
                 console.error('Error:', error);
             }
         })
+    }
+
+    function edit_data(id) {
+        var data = {
+            id: id,
+            action: 'edit'
+        }
+
+        $.ajax({
+            url: 'profil_pengguna.php',
+            type: 'GET',
+            data: data,
+            success: function(response) {
+
+                if (response.status === 'OK') {
+                    // alert('Status OK');
+                    $('#id_user').val(response.data.id_persons);
+                    $('#edit_namadepan').val(response.data.first_name);
+                    $('#edit_namabelakang').val(response.data.last_name);
+                    $('#edit_email').val(response.data.email);
+                    $('#edit_phone').val(response.data.phone);
+                    $('#edit_jk').val(response.data.gender);
+                    $('#edit_ttl').val(response.data.birthday);
+                    $('#edit_jalan').val(response.data.street);
+                    $('#edit_alamat').val(response.data.streetname);
+                    $('#edit_kota').val(response.data.city);
+                    $('#modaledit').modal('show');
+                } else {
+                    alert('Gagal menampilkan data!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        })
+    }
+
+    function simpan_edit() {
+        var data = {
+            action: 'save',
+            nama_depan: $('#edit_namadepan').val(),
+            nama_belakang: $('#edit_namabelakang').val(),
+            email: $('#edit_email').val(),
+            phone: $('#edit_phone').val(),
+            jk: $('#edit_jk').val(),
+            ttl: $('#edit_ttl').val(),
+            street: $('#edit_jalan').val(),
+            street_name: $('#edit_alamat').val(),
+            city: $('#edit_kota').val(),
+            id: $('#id_user').val()
+        }
+        // console.log(data);
+
+        $.ajax({
+            url: 'profil_pengguna.php',
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                // console.log(response);
+                // var res = JSON.parse(response)
+                if (response.status === 'OK') {
+                    $('#modaledit').modal('hide');
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Gagal menambahkan data!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+
+    function tambah_data() {
+        $('#modaltambah').modal('show');
+    }
+
+    function simpan_data() {
+
+        var data = {
+            action: 'create',
+            nama_depan: $('#namadepan').val(),
+            nama_belakang: $('#namabelakang').val(),
+            email: $('#email_x').val(),
+            phone: $('#phone').val(),
+            jk: $('#jk').val(),
+            ttl: $('#ttl').val(),
+            street: $('#jalan').val(),
+            street_name: $('#alamat_x').val(),
+            city: $('#kota').val()
+        }
+        console.log(data);
+
+        $.ajax({
+            url: 'profil_pengguna.php',
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                console.log(response);
+                // var res = JSON.parse(response)
+                if (response.status === 'OK') {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Gagal menambahkan data!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+            }
+        });
     }
     </script>
 </body>

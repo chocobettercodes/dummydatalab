@@ -23,8 +23,6 @@
                 <span class="navbar-brand mb-0 h1">Dummy Data Lab</span>
                 <a class="nav-link active" href="calculator.php">Home <span class="sr-only">(current)</span></a>
                 <a class="nav-link" href="profil_pengguna.php">Data Profil Pengguna</a>
-                <a class="nav-link" href="health.php">Data Alamat</a>
-                <a class="nav-link" href="health.php">Data Buku</a>
             </div>
         </div>
     </nav>
