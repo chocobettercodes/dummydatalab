@@ -13,8 +13,8 @@ Fitur ini memungkinkan untuk bisa kita mengubah, menghapus, menambahkan data mau
 
 ## TAMPILAN BERANDA DUMMY DATA LAB
 
-![GAMBAR BERANDA](image/beranda.PNG) <!-- Ganti dengan path ke gambar beranda Anda -->
+![GAMBAR BERANDA](image/beranda.png) <!-- Ganti dengan path ke gambar beranda Anda -->
 
 ## TAMPILAN PROFIL PENGGUNA
 
-![GAMBAR PROFIL PENGGUNA](image/user.PNG) <!-- Ganti dengan path ke gambar kalkulator umur Anda -->
+![GAMBAR PROFIL PENGGUNA](image/user.png) <!-- Ganti dengan path ke gambar kalkulator umur Anda -->
